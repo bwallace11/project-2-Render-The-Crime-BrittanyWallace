@@ -508,20 +508,15 @@ console.log("Clue:", clue);</div>
           CLICK CARDS &amp; PHOTOS — WATCH THE WEB FORM
         </div>
 
-        <!-- Text panel centered on board — strings connect TO this last -->
-        <div class="text-panel" id="ch3-text-panel" style="position:absolute;top:50%;left:50%;z-index:6;background:rgba(3,2,10,.93);border:1px solid rgba(61,127,255,.18);padding:18px 16px;max-width:210px;pointer-events:none;text-align:center;">
-          <div class="pin" style="background:var(--color-blue-neon);box-shadow:0 0 8px var(--color-blue-neon);top:-8px;left:50%;transform:translateX(-50%);"></div>
-          <p class="chapter-label" style="font-size:.52rem;">Chapter 03 — The System</p>
-          <h2 class="chapter-title" id="ch3-title" style="font-size:1.3rem;">The Crime<br>Board</h2>
-          <p class="chapter-subtitle" style="font-size:.8rem;">data-* attributes</p>
-          <p class="chapter-body" style="font-size:.72rem;">Every pin hides a secret in HTML. Click cards or suspect photos — JS reads the <code style="color:var(--color-green-term)">dataset</code> property to surface it. Each new click draws a red string connecting evidence to this panel.</p>
-          <div class="code-block" style="font-size:.6rem;text-align:left;">&lt;div data-info="2:17 AM"&gt;
-
-// JS reads hidden data:
-card.dataset.info
+        <!-- Text panel TOP-LEFT — strings connect TO this last after all items linked -->
+        <div class="text-panel" id="ch3-text-panel" style="position:absolute;top:12px;left:12px;z-index:6;background:rgba(3,2,10,.93);border:1px solid rgba(61,127,255,.18);padding:16px 18px;max-width:200px;pointer-events:none;">
+          <div class="pin" style="position:absolute;background:var(--color-blue-neon);box-shadow:0 0 8px var(--color-blue-neon);top:-8px;left:50%;transform:translateX(-50%);width:11px;height:11px;border-radius:50%;"></div>
+          <p class="chapter-label" style="font-size:.5rem;">Chapter 03 — The System</p>
+          <h2 class="chapter-title" id="ch3-title" style="font-size:1.2rem;margin-bottom:6px;">The Crime<br>Board</h2>
+          <p class="chapter-subtitle" style="font-size:.75rem;margin-bottom:8px;">data-* attributes</p>
+          <p class="chapter-body" style="font-size:.68rem;line-height:1.6;">Click every card &amp; photo to build the web. JS reads <code style="color:var(--color-green-term)">dataset</code> on each. The last string links back here.</p>
+          <div class="code-block" style="font-size:.57rem;margin-top:10px;">card.dataset.info
 // → "2:17 AM"
-
-// Draws a new string:
 svg.appendChild(line);</div>
         </div>
       </div>
@@ -568,6 +563,7 @@ svg.appendChild(line);</div>
           <span class="photo-evidence-label">LAST SEEN ALIVE</span>
         </div>
         <p class="photo-caption">VICTIM</p>
+        <div class="dr-develop-label" id="drlabel-victim" aria-live="polite"></div>
       </div>
 
       <!-- Photo: DR HARLOW -->
@@ -580,6 +576,7 @@ svg.appendChild(line);</div>
           <span class="photo-evidence-label">ON SITE 2:00 AM</span>
         </div>
         <p class="photo-caption">DR. HARLOW</p>
+        <div class="dr-develop-label" id="drlabel-doctor" aria-live="polite"></div>
       </div>
 
       <!-- Photo: WIDOW -->
@@ -592,6 +589,7 @@ svg.appendChild(line);</div>
           <span class="photo-evidence-label">ALIBI: NONE</span>
         </div>
         <p class="photo-caption">THE WIDOW</p>
+        <div class="dr-develop-label" id="drlabel-widow" aria-live="polite"></div>
       </div>
 
       <!-- Photo: BUTLER -->
@@ -604,6 +602,7 @@ svg.appendChild(line);</div>
           <span class="photo-evidence-label">HAD THE KEY</span>
         </div>
         <p class="photo-caption">THE BUTLER</p>
+        <div class="dr-develop-label" id="drlabel-butler" aria-live="polite"></div>
       </div>
 
       <!-- Photo: NEPHEW -->
@@ -616,6 +615,7 @@ svg.appendChild(line);</div>
           <span class="photo-evidence-label">6 BLOCKS AWAY</span>
         </div>
         <p class="photo-caption">THE NEPHEW</p>
+        <div class="dr-develop-label" id="drlabel-nephew" aria-live="polite"></div>
       </div>
 
       <!-- ── ROW 2: EVIDENCE PHOTOS (below rope on second clothesline) ── -->
@@ -648,6 +648,7 @@ svg.appendChild(line);</div>
           <span class="photo-evidence-label">SIZE 11 BOOT</span>
         </div>
         <p class="photo-caption">FOOTPRINTS</p>
+        <div class="dr-develop-label" id="drlabel-footprints" aria-live="polite"></div>
       </div>
 
       <!-- Evidence: SHELL CASING -->
@@ -676,6 +677,7 @@ svg.appendChild(line);</div>
           <span class="photo-evidence-label">NO SERIAL #</span>
         </div>
         <p class="photo-caption">SHELL CASING</p>
+        <div class="dr-develop-label" id="drlabel-shell" aria-live="polite"></div>
       </div>
 
       <!-- Evidence: MATCHBOOK -->
@@ -709,6 +711,7 @@ svg.appendChild(line);</div>
           <span class="photo-evidence-label">ROOM 7 WRITTEN INSIDE</span>
         </div>
         <p class="photo-caption">MATCHBOOK</p>
+        <div class="dr-develop-label" id="drlabel-matchbook" aria-live="polite"></div>
       </div>
 
       <!-- Evidence: CIGARETTE -->
@@ -740,6 +743,7 @@ svg.appendChild(line);</div>
           <span class="photo-evidence-label">MONOGRAM: D.M.</span>
         </div>
         <p class="photo-caption">CIGARETTE</p>
+        <div class="dr-develop-label" id="drlabel-cigarette" aria-live="polite"></div>
       </div>
 
       <!-- Evidence: TORN FABRIC -->
@@ -771,6 +775,7 @@ svg.appendChild(line);</div>
           <span class="photo-evidence-label">DARK WOOL — GOLD THREAD</span>
         </div>
         <p class="photo-caption">TORN FABRIC</p>
+        <div class="dr-develop-label" id="drlabel-fabric" aria-live="polite"></div>
       </div>
 
       <div class="text-panel" id="ch4-text-panel">
@@ -794,17 +799,7 @@ getComputedStyle(root)
       </div>
 
       <!-- Darkroom develop reveal text — shown staggered as photos develop -->
-      <!-- Each label is absolutely positioned below its photo, starts hidden, revealed by JS -->
-      <div class="dr-develop-label" id="drlabel-victim"     style="left:3%;top:298px;"    aria-live="polite"></div>
-      <div class="dr-develop-label" id="drlabel-doctor"     style="left:17%;top:298px;"   aria-live="polite"></div>
-      <div class="dr-develop-label" id="drlabel-widow"      style="left:31%;top:298px;"   aria-live="polite"></div>
-      <div class="dr-develop-label" id="drlabel-butler"     style="left:46%;top:298px;"   aria-live="polite"></div>
-      <div class="dr-develop-label" id="drlabel-nephew"     style="left:61%;top:298px;"   aria-live="polite"></div>
-      <div class="dr-develop-label" id="drlabel-footprints" style="left:4%;top:500px;"    aria-live="polite"></div>
-      <div class="dr-develop-label" id="drlabel-shell"      style="left:20%;top:500px;"   aria-live="polite"></div>
-      <div class="dr-develop-label" id="drlabel-matchbook"  style="left:36%;top:500px;"   aria-live="polite"></div>
-      <div class="dr-develop-label" id="drlabel-cigarette"  style="left:52%;top:500px;"   aria-live="polite"></div>
-      <div class="dr-develop-label" id="drlabel-fabric"     style="left:68%;top:500px;"   aria-live="polite"></div>
+      <!-- Labels live INSIDE each photo wrapper, always below their own photo -->
 
     </article>
 

@@ -593,87 +593,141 @@ function initChapterTextAnimations(track, totalWidth) {
   const mainTween = window._mainScrollTween;
   if (!mainTween) return;
 
-  // Ch2 interrogation panel — slides in from right with a lurch
+  // ── CH1 panel: already handled by initCh1StickyText + updateCh1Text ──
+  // But add a code-block glow pulse to make it feel alive
+  const ch1code = document.querySelector('#ch1-text-panel .code-block');
+  if (ch1code) {
+    gsap.to(ch1code, {
+      boxShadow: '0 0 22px rgba(0,255,65,.35), inset 0 0 12px rgba(0,255,65,.08)',
+      duration: 1.8, yoyo: true, repeat: -1, ease: 'sine.inOut'
+    });
+  }
+
+  // ── CH2 panel: TYPEWRITER — each line types itself in from nothing ──
   const ch2panel = document.querySelector('#chapter-2 .text-panel');
   if (ch2panel) {
-    const ch2Items = ch2panel.querySelectorAll('.chapter-label,.chapter-title,.chapter-subtitle,.chapter-body,.code-block');
-    gsap.set(ch2Items, { opacity: 0, x: 220, skewX: 12 });
+    const ch2Items = Array.from(ch2panel.querySelectorAll(
+      '.chapter-label,.chapter-title,.chapter-subtitle,.chapter-body,.code-block'
+    ));
+    // Start hidden, clipped to zero width
+    gsap.set(ch2Items, { opacity: 0, clipPath: 'inset(0 100% 0 0)', x: 0 });
     ScrollTrigger.create({
       trigger: '#chapter-2',
       containerAnimation: mainTween,
-      start: 'left 85%',
+      start: 'left 75%',
       once: true,
       onEnter: () => {
+        // Each element sweeps open like a typewriter reveal
         gsap.to(ch2Items, {
-          opacity: 1, x: 0, skewX: 0,
-          duration: 0.7, stagger: 0.1, ease: 'power4.out'
+          opacity: 1,
+          clipPath: 'inset(0 0% 0 0)',
+          duration: 0.6,
+          stagger: 0.14,
+          ease: 'power2.inOut'
         });
+        // Code block gets terminal flicker after text loads
+        const cb2 = ch2panel.querySelector('.code-block');
+        if (cb2) {
+          gsap.to(cb2, {
+            boxShadow: '0 0 20px rgba(0,255,65,.3)',
+            duration: 1.4, yoyo: true, repeat: -1, ease: 'sine.inOut',
+            delay: 0.8
+          });
+        }
       }
     });
   }
 
-  // Ch3 center text panel — drops from above with bounce
-  // xPercent/yPercent shift by percentage of the element's own size → proper centering
+  // ── CH3 panel: SLAMS DOWN like a pinned note, then rotates into place ──
   const ch3panel = document.querySelector('#ch3-text-panel');
   if (ch3panel) {
-    // Set initial centered + animated-in state
-    gsap.set(ch3panel, { xPercent: -50, yPercent: -150, rotation: -6, scale: 0.85, opacity: 0 });
+    gsap.set(ch3panel, { opacity: 0, y: -100, rotation: -12, scale: 0.75, transformOrigin: 'top left' });
     ScrollTrigger.create({
       trigger: '#chapter-3',
       containerAnimation: mainTween,
       start: 'left 80%',
       once: true,
       onEnter: () => {
+        // Slam down with overshoot, then settle into slight tilt
         gsap.to(ch3panel, {
-          xPercent: -50, yPercent: -50, rotation: 0, scale: 1, opacity: 1,
-          duration: 0.8, ease: 'back.out(2.2)'
+          opacity: 1, y: 0, rotation: 1.5, scale: 1,
+          duration: 0.65, ease: 'back.out(2.8)'
         });
-        // Thud shake
+        // Corkboard shudder
         const board = document.querySelector('#corkboard');
         if (board) {
-          gsap.fromTo(board,
-            { y: 0 },
-            { y: -6, duration: 0.08, yoyo: true, repeat: 5, ease: 'none', delay: 0.7 }
+          gsap.fromTo(board, { y: 0 },
+            { y: -6, duration: 0.06, yoyo: true, repeat: 5, ease: 'none', delay: 0.55 }
           );
         }
+        // Panel thumps with a glow flash on land
+        setTimeout(() => {
+          gsap.fromTo(ch3panel,
+            { boxShadow: '0 0 0 rgba(61,127,255,0)' },
+            { boxShadow: '0 0 35px rgba(61,127,255,.7)', duration: 0.25,
+              yoyo: true, repeat: 1, ease: 'power2.out' }
+          );
+        }, 600);
       }
     });
   }
 
-  // Ch4 darkroom panel — materialises out of darkness
+  // ── CH4 panel: DEVELOPS like a darkroom photo — blurs in from nothing ──
   const ch4panel = document.querySelector('#ch4-text-panel');
   if (ch4panel) {
-    const ch4Items = ch4panel.querySelectorAll('.chapter-label,.chapter-title,.chapter-subtitle,.chapter-body,.code-block');
-    gsap.set(ch4panel, { opacity: 0, scale: 0.92 });
+    const ch4Items = Array.from(ch4panel.querySelectorAll(
+      '.chapter-label,.chapter-title,.chapter-subtitle,.chapter-body,.code-block'
+    ));
+    gsap.set(ch4panel, { opacity: 0, scale: 0.94 });
+    gsap.set(ch4Items, { opacity: 0, y: 20 });
     ScrollTrigger.create({
       trigger: '#chapter-4',
       containerAnimation: mainTween,
-      start: 'left 80%',
+      start: 'left 75%',
       once: true,
       onEnter: () => {
-        gsap.to(ch4panel, { opacity: 1, scale: 1, duration: 1.4, ease: 'power3.out' });
-        gsap.fromTo(ch4Items,
-          { opacity: 0, y: 18 },
-          { opacity: 1, y: 0, stagger: 0.15, duration: 0.9, ease: 'power2.out', delay: 0.4 }
-        );
+        // Panel fades in like a photo developing in chemical bath
+        gsap.to(ch4panel, {
+          opacity: 1, scale: 1,
+          duration: 2.2, ease: 'power1.out'
+        });
+        // Lines materialize one by one with amber glow
+        gsap.to(ch4Items, {
+          opacity: 1, y: 0,
+          stagger: { amount: 1.4, ease: 'power1.in' },
+          duration: 0.8,
+          ease: 'power2.out',
+          delay: 0.4
+        });
+        // Amber pulse on the border — like safelight warmth
+        gsap.to(ch4panel, {
+          borderColor: 'rgba(255,170,0,.55)',
+          boxShadow: '0 0 30px rgba(255,100,0,.2)',
+          duration: 1.8, yoyo: true, repeat: 3, ease: 'sine.inOut', delay: 0.3
+        });
       }
     });
   }
 
-  // Ch5 label — slams in staggered
+  // ── CH5 panel: FILING CABINET SLAM — drops from top, bounces, paper spills ──
   const ch5label = document.querySelector('#ch5-label');
   if (ch5label) {
-    const ch5parts = ch5label.querySelectorAll('.chapter-label,.chapter-title,.chapter-subtitle');
-    gsap.set(ch5parts, { opacity: 0, y: 30, rotation: 3 });
+    const ch5parts = Array.from(ch5label.querySelectorAll(
+      '.chapter-label,.chapter-title,.chapter-subtitle'
+    ));
+    // Set each part offset staggered Y
+    gsap.set(ch5parts, { opacity: 0, y: 50, rotation: 4, transformOrigin: 'center bottom' });
     ScrollTrigger.create({
       trigger: '#chapter-5',
       containerAnimation: mainTween,
-      start: 'left 80%',
+      start: 'left 75%',
       once: true,
       onEnter: () => {
         gsap.to(ch5parts, {
           opacity: 1, y: 0, rotation: 0,
-          stagger: 0.18, duration: 0.8, ease: 'power4.out'
+          duration: 0.7,
+          stagger: 0.18,
+          ease: 'back.out(1.8)'
         });
       }
     });
@@ -1104,8 +1158,6 @@ function showBoardTooltip(el, text) {
    ───────────────────────────────────────────── */
 let darkroomLightsOn = true;
 let photosDeveloped  = false;
-let darkroomParallaxActive = false;
-let drParallaxRaf = null;
 
 function initChapter4_Darkroom() {
   const switchBtn   = document.querySelector('#light-switch-btn');
@@ -1133,7 +1185,7 @@ function initChapter4_Darkroom() {
       if (roomLight)  roomLight.classList.add('off');
       if (safelight)  safelight.style.opacity = '1';
       if (statusLabel) statusLabel.textContent = 'OFF';
-      if (instruction) instruction.textContent = 'MOVE MOUSE — CAST LIGHT OVER THE DEVELOPING PHOTOS';
+      if (instruction) instruction.textContent = 'WATCH THE EVIDENCE DEVELOP';
       document.documentElement.style.setProperty('--color-night', '#080005');
       document.documentElement.style.setProperty('--color-amber', '#ff3300');
       if (trNight) trNight.textContent = '#080005';
@@ -1145,11 +1197,6 @@ function initChapter4_Darkroom() {
         photosDeveloped = true;
         developPhotos();
       }
-      // Activate parallax after photos start to appear
-      setTimeout(() => {
-        darkroomParallaxActive = true;
-        startDarkroomParallax();
-      }, 2000);
       console.log('%c🔴 Lights OFF — photos begin developing', 'color: #cc2200;');
       console.log('%cdocument.documentElement.style.setProperty("--color-night", "#080005")', 'color: #9b4dff; font-family: monospace;');
     } else {
@@ -1163,98 +1210,82 @@ function initChapter4_Darkroom() {
       document.documentElement.style.setProperty('--color-amber', '#ffaa00');
       if (trNight) trNight.textContent = '#0a0818';
       if (trAmber) trAmber.textContent = '#ffaa00';
-      darkroomParallaxActive = false;
       console.log('%c💡 Lights ON', 'color: #ffaa00;');
       console.log('%cdocument.documentElement.style.setProperty("--color-night", "#0a0818")', 'color: #9b4dff; font-family: monospace;');
     }
   });
 }
 
-/* Develop photos and evidence: stagger them in, then start drip animations.
-   Text labels appear WITH their photo — one at a time, no overlap. */
+/* Develop photos staggered — each photo fades in from black,
+   then its label appears below it with a GSAP typewriter reveal.
+   Labels persist permanently after lights-off. No overlap. */
 function developPhotos() {
-  // Map photo IDs to their label content
-  const suspectLabelData = [
-    { photoId: 'drphoto-victim',    labelId: 'drlabel-victim',    text: 'VICTIM',      detail: 'Last known photo — 2:15 AM' },
-    { photoId: 'drphoto-doctor',    labelId: 'drlabel-doctor',    text: 'DR. HARLOW',  detail: 'On site 2:00 AM · Blackmail motive' },
-    { photoId: 'drphoto-widow',     labelId: 'drlabel-widow',     text: 'THE WIDOW',   detail: 'Alibi: unverified · Sole heir' },
-    { photoId: 'drphoto-butler',    labelId: 'drlabel-butler',    text: 'THE BUTLER',  detail: 'Had the only east key · 2:08 AM' },
-    { photoId: 'drphoto-nephew',    labelId: 'drlabel-nephew',    text: 'THE NEPHEW',  detail: 'Monogram D.M. · 6 blocks away' },
-  ];
-  const evidenceLabelData = [
-    { photoId: 'drphoto-footprints', labelId: 'drlabel-footprints', text: 'FOOTPRINTS',  detail: 'Size 11 boot · deep heel strike' },
-    { photoId: 'drphoto-shell',      labelId: 'drlabel-shell',      text: 'SHELL CASING', detail: '.38 cal · no serial number' },
-    { photoId: 'drphoto-matchbook',  labelId: 'drlabel-matchbook',  text: 'MATCHBOOK',   detail: 'Club Noir · Room 7 written inside' },
-    { photoId: 'drphoto-cigarette',  labelId: 'drlabel-cigarette',  text: 'CIGARETTE',   detail: 'Monogram: D.M. · expensive brand' },
-    { photoId: 'drphoto-fabric',     labelId: 'drlabel-fabric',     text: 'TORN FABRIC', detail: 'Dark wool blend · gold thread' },
-  ];
-
-  // Reveal a label element with GSAP
-  function revealLabel(labelId, text, detail, delay) {
-    const el = document.querySelector('#' + labelId);
-    if (!el) return;
-    el.innerHTML = `<strong>${text}</strong><br><span>${detail}</span>`;
-    setTimeout(() => {
-      if (!prefersReducedMotion) {
-        gsap.fromTo(el,
-          { opacity: 0, y: 8, filter: 'blur(4px)' },
-          { opacity: 1, y: 0, filter: 'blur(0px)', duration: 1.1, ease: 'power2.out' }
-        );
-      } else {
-        el.style.opacity = '1';
-      }
-      // Mark as permanently visible (stays on after lights come back)
-      el.classList.add('revealed');
-    }, delay);
+  // Reveal a label with GSAP — typewriter character-by-character feel
+  function revealLabel(labelEl, name, detail, delay) {
+    if (!labelEl) return;
+    // Build content
+    labelEl.innerHTML = `<strong>${name}</strong><em>${detail}</em>`;
+    gsap.set(labelEl, { opacity: 0, y: 10, scaleX: 0.85, transformOrigin: 'left center' });
+    gsap.to(labelEl, {
+      opacity: 1, y: 0, scaleX: 1,
+      duration: 0.9,
+      delay: delay / 1000,
+      ease: 'power3.out',
+      onComplete: () => labelEl.classList.add('revealed')
+    });
   }
 
-  // Develop suspect photos (brightness 0 → normal), show label with each
-  document.querySelectorAll('.photo-frame img').forEach((img, i) => {
+  // Suspect photo data matched to their label IDs and photo frame img elements
+  const suspectPhotos = document.querySelectorAll('.photo-frame img');
+  const suspectInfo = [
+    { labelId: 'drlabel-victim',  name: 'VICTIM',     detail: 'Last seen — 2:15 AM' },
+    { labelId: 'drlabel-doctor',  name: 'DR. HARLOW', detail: 'On site 2:00 AM' },
+    { labelId: 'drlabel-widow',   name: 'THE WIDOW',  detail: 'Alibi: unverified' },
+    { labelId: 'drlabel-butler',  name: 'THE BUTLER', detail: 'Had the only key' },
+    { labelId: 'drlabel-nephew',  name: 'THE NEPHEW', detail: 'D.M. monogram' },
+  ];
+
+  suspectPhotos.forEach((img, i) => {
     const delay = 600 + i * 550;
     setTimeout(() => {
       img.classList.add('developed');
       const canvas = img.closest('.photo-frame').querySelector('.drip-canvas');
       if (canvas) { canvas.classList.add('active'); animateWaterDrip(canvas); }
+      // Label reveals 500ms after photo starts developing
+      const info = suspectInfo[i];
+      if (info) revealLabel(document.querySelector('#' + info.labelId), info.name, info.detail, 500);
+      // Evidence label on the photo frame
+      const photoLabel = img.closest('.photo-frame').querySelector('.photo-evidence-label');
+      if (photoLabel) setTimeout(() => photoLabel.classList.add('revealed'), 600);
       console.log('%c🖼 Developing: ' + img.alt, 'color: #9b4dff;');
     }, delay);
-
-    // Show label 400ms after photo starts developing
-    if (suspectLabelData[i]) {
-      const ld = suspectLabelData[i];
-      revealLabel(ld.labelId, ld.text, ld.detail, delay + 400);
-    }
   });
 
-  // Reveal evidence labels on suspect photos slightly after
-  document.querySelectorAll('.photo-frame img').forEach((img, i) => {
-    setTimeout(() => {
-      const label = img.closest('.photo-frame').querySelector('.photo-evidence-label');
-      if (label) label.classList.add('revealed');
-    }, 600 + i * 550 + 600);
-  });
+  // Evidence SVG photos
+  const evidenceContents = document.querySelectorAll('.evidence-photo-content');
+  const evidenceInfo = [
+    { labelId: 'drlabel-footprints', name: 'FOOTPRINTS',   detail: 'Size 11 boot' },
+    { labelId: 'drlabel-shell',      name: 'SHELL CASING', detail: '.38 cal — no serial' },
+    { labelId: 'drlabel-matchbook',  name: 'MATCHBOOK',    detail: 'Club Noir — Room 7' },
+    { labelId: 'drlabel-cigarette',  name: 'CIGARETTE',    detail: 'Monogram: D.M.' },
+    { labelId: 'drlabel-fabric',     name: 'TORN FABRIC',  detail: 'Dark wool, gold thread' },
+  ];
 
-  // Develop evidence SVG photos (opacity 0 → 1), show label with each
-  document.querySelectorAll('.evidence-photo-content').forEach((evidenceContent, i) => {
+  evidenceContents.forEach((content, i) => {
     const delay = 800 + i * 450;
     setTimeout(() => {
-      evidenceContent.classList.add('developed');
-      evidenceContent.style.opacity = '1';
-      const canvas = evidenceContent.closest('.photo-frame--evidence').querySelector('.drip-canvas');
+      content.classList.add('developed');
+      content.style.opacity = '1';
+      const canvas = content.closest('.photo-frame--evidence').querySelector('.drip-canvas');
       if (canvas) { canvas.classList.add('active'); animateWaterDrip(canvas); }
-      const label = evidenceContent.closest('.photo-frame--evidence').querySelector('.photo-evidence-label');
-      if (label) label.classList.add('revealed');
-      const caption = evidenceContent.closest('.darkroom-photo').querySelector('.photo-caption');
-      if (caption) {
-        gsap.fromTo(caption, { opacity: 0 }, { opacity: 1, duration: 1.2, delay: 0.5 });
-        console.log('%c🖼 Evidence developing: ' + caption.textContent, 'color: #9b4dff;');
-      }
+      const photoLabel = content.closest('.photo-frame--evidence').querySelector('.photo-evidence-label');
+      if (photoLabel) setTimeout(() => photoLabel.classList.add('revealed'), 400);
+      const caption = content.closest('.darkroom-photo').querySelector('.photo-caption');
+      if (caption) gsap.fromTo(caption, { opacity: 0 }, { opacity: 1, duration: 1.2, delay: 0.5 });
+      const info = evidenceInfo[i];
+      if (info) revealLabel(document.querySelector('#' + info.labelId), info.name, info.detail, 450);
+      console.log('%c🖼 Evidence: ' + (evidenceInfo[i] ? evidenceInfo[i].name : i), 'color: #9b4dff;');
     }, delay);
-
-    // Show develop label with this evidence photo
-    if (evidenceLabelData[i]) {
-      const ld = evidenceLabelData[i];
-      revealLabel(ld.labelId, ld.text, ld.detail, delay + 350);
-    }
   });
 }
 
@@ -1346,31 +1377,6 @@ function animateWaterDrip(canvas) {
 
   requestAnimationFrame(draw);
 }
-
-/* Darkroom mouse parallax — photos shift at different depths for 3D effect */
-function startDarkroomParallax() {
-  const ch4 = document.querySelector('#chapter-4');
-  if (!ch4) return;
-
-  ch4.addEventListener('mousemove', (e) => {
-    if (!darkroomParallaxActive) return;
-    if (drParallaxRaf) cancelAnimationFrame(drParallaxRaf);
-    drParallaxRaf = requestAnimationFrame(() => {
-      const r = ch4.getBoundingClientRect();
-      const mx = ((e.clientX - r.left) / r.width  - 0.5) * 2;
-      const my = ((e.clientY - r.top)  / r.height - 0.5) * 2;
-
-      document.querySelectorAll('.dr-parallax').forEach(photo => {
-        const depth = parseFloat(photo.dataset.depth) || 0.06;
-        const tx = mx * depth * -80;
-        const ty = my * depth * -40;
-        photo.style.transition = 'transform 0.15s cubic-bezier(0.25,0.46,0.45,0.94)';
-        photo.style.transform  = `translate(${tx}px, ${ty}px)`;
-      });
-    });
-  });
-}
-
 
 /* ─────────────────────────────────────────────
    CHAPTER 5: CASE FILE — localStorage
