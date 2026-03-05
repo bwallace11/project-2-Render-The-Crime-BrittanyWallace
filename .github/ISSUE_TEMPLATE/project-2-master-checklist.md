@@ -15,14 +15,14 @@ assignees: ""
 
 ## Sub-Issues (Create + Link)
 
-- [ ] Story + Structure issue: #
-- [ ] GSAP Motion Foundation issue: #
-- [ ] ScrollTrigger Core issue: #
-- [ ] Pinned Showpiece issue: #
-- [ ] ScrollSmoother Setup issue: #
-- [ ] Tokens + Theme Modes issue: #
-- [ ] Assets + Accessibility + QA issue: #
-- [ ] Reflection + README + Submission issue: #
+- [ ] Story + Structure issue: #8
+- [ ] GSAP Motion Foundation issue: #3
+- [ ] ScrollTrigger Core issue: #7
+- [ ] Pinned Showpiece issue: #4
+- [ ] ScrollSmoother Setup issue: #6
+- [ ] Tokens + Theme Modes issue: #9
+- [ ] Assets + Accessibility + QA issue: #2
+- [ ] Reflection + README + Submission issue: #5
 
 ## Final Submission Links
 
