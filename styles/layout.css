@@ -19,25 +19,26 @@ body {
   --color-shadow:       #dedad0;
   --color-dusk:         #d4d0c6;
   --color-fog:          #c8c4ba;
-  --color-blue-neon:    #7b2fff;
-  --color-blue-glow:    #a855ff;
-  --color-blue-light:   #c084fc;
-  --color-purple-neon:  #e040fb;
-  --color-green-term:   #00c9b1;
-  --color-amber:        #ff6fe8;
-  --color-amber-dim:    #d946ef;
-  --color-red-neon:     #ff2d78;
-  --color-smoke:        #6b6580;
-  --color-mist:         #2d1f4e;
-  --color-white:        #1a1030;
-  --shadow-text-blue:   0 0 14px rgba(123,47,255,.85), 0 0 30px rgba(123,47,255,.4);
-  --shadow-text-green:  0 0 14px rgba(0,201,177,.85), 0 0 25px rgba(0,201,177,.4);
-  --shadow-text-amber:  0 0 14px rgba(255,111,232,.85), 0 0 25px rgba(255,111,232,.4);
-  --shadow-text-red:    0 0 14px rgba(255,45,120,.85), 0 0 25px rgba(255,45,120,.4);
-  --glow-blue:          0 0 20px rgba(123,47,255,.6), 0 0 40px rgba(123,47,255,.3);
-  --glow-red:           0 0 20px rgba(255,45,120,.6);
-  --glow-amber:         0 0 20px rgba(255,111,232,.6);
-  --rain-color:         rgba(123, 47, 255, 0.18);
+  --color-blue-neon:    #6b1fe8;
+  --color-blue-glow:    #8b35e8;
+  --color-blue-light:   #b06cf4;
+  --color-purple-neon:  #c026db;
+  --color-green-term:   #00906a;
+  --color-amber:        #cc00c8;
+  --color-amber-dim:    #a800b0;
+  --color-red-neon:     #e0004a;
+  /* Body text + UI text: dark charcoal — easy to read on paper */
+  --color-smoke:        #5a5070;
+  --color-mist:         #2a2040;
+  --color-white:        #130e28;
+  --shadow-text-blue:   0 0 14px rgba(107,31,232,.7), 0 0 30px rgba(107,31,232,.35);
+  --shadow-text-green:  0 0 14px rgba(0,144,106,.7),  0 0 25px rgba(0,144,106,.35);
+  --shadow-text-amber:  0 0 14px rgba(204,0,200,.7),  0 0 25px rgba(204,0,200,.35);
+  --shadow-text-red:    0 0 14px rgba(224,0,74,.7),   0 0 25px rgba(224,0,74,.35);
+  --glow-blue:          0 0 20px rgba(107,31,232,.5), 0 0 40px rgba(107,31,232,.25);
+  --glow-red:           0 0 20px rgba(224,0,74,.5);
+  --glow-amber:         0 0 20px rgba(204,0,200,.5);
+  --rain-color:         rgba(107, 31, 232, 0.15);
 }
 
 /* ── CURSOR ── */
@@ -1300,3 +1301,16 @@ button:focus-visible, [role="button"]:focus-visible {
   filter: brightness(1.1) saturate(1.2) !important;
   box-shadow: 0 0 28px rgba(123,47,255,0.55) !important;
 }
+
+/* ── REDUCE MOTION (user toggle OR OS preference) ──
+   Kills decorative CSS animations. GSAP checks prefersReducedMotion()
+   at runtime so JS-driven story beats remain intact (clue flash,
+   character reveals, darkroom develop) — they just skip the motion. */
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}
+/* Keep opacity transitions for story reveals — just no movement */
+.reduce-motion .photo-frame img        { transition: filter 0.3s ease-in-out !important; }
+.reduce-motion .evidence-photo-content { transition: opacity 0.3s ease-in-out !important; }
+.reduce-motion .dr-develop-label       { transition: opacity 0.3s ease-in-out !important; }
+.reduce-motion .suspect-card img       { transition: filter 0.3s !important; }

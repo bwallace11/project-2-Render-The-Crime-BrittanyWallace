@@ -2,7 +2,11 @@
    MAIN.JS — Lost in the Scroll  v2.0
    ============================================ */
 
-const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+// Reduce-motion: combines OS preference + user toggle (live, not cached at startup)
+let _userReduceMotion = localStorage.getItem('reduceMotion') === 'true';
+function prefersReducedMotion() {
+  return _userReduceMotion || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
 
 // ── GLOBAL STATE ──
 const caseName = "CASE #4471 — THE RENDER MURDERS";
@@ -111,6 +115,29 @@ function initThemeSystem() {
   window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
     if (localStorage.getItem('theme') === 'system') applyTheme('system');
   });
+
+  // ── REDUCE MOTION TOGGLE ──
+  const rmBtn = document.querySelector('#reduce-motion-btn');
+  if (rmBtn) {
+    function syncRmBtn() {
+      const on = _userReduceMotion;
+      rmBtn.textContent = on ? '✅ Reduce Motion: ON' : '🎬 Reduce Motion: OFF';
+      rmBtn.setAttribute('aria-pressed', String(on));
+      rmBtn.classList.toggle('active', on);
+      document.documentElement.classList.toggle('reduce-motion', on);
+    }
+    syncRmBtn();
+    // Also respect OS preference on load
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      document.documentElement.classList.add('reduce-motion');
+    }
+    rmBtn.addEventListener('click', () => {
+      _userReduceMotion = !_userReduceMotion;
+      localStorage.setItem('reduceMotion', String(_userReduceMotion));
+      syncRmBtn();
+      console.log('%c♿ Reduce Motion: ' + (_userReduceMotion ? 'ON' : 'OFF'), 'color:#a855ff;');
+    });
+  }
 }
 
 function applyTheme(choice) {
@@ -145,13 +172,18 @@ function setupMouseListeners() {
 
     if (!introComplete) updateParallax();
 
-    // Ch1 flashlight — chapter-relative coords
+    // Ch1 flashlight — UV blacklight: lavender/purple beam, dark surround
     if (dom.flashlightEl && introComplete) {
       const ch1 = document.querySelector('#chapter-1');
       if (ch1) {
         const r = ch1.getBoundingClientRect();
+        const fx = e.clientX - r.left, fy = e.clientY - r.top;
         dom.flashlightEl.style.background =
-          `radial-gradient(circle 200px at ${e.clientX - r.left}px ${e.clientY - r.top}px, transparent 0%, rgba(0,0,0,.97) 100%)`;
+          `radial-gradient(circle 220px at ${fx}px ${fy}px,
+            rgba(120,60,255,0.10)  0%,
+            rgba(90,20,200,0.22)  35%,
+            rgba(30,0,80,0.78)    65%,
+            rgba(0,0,8,0.97)     100%)`;
       }
     }
 
@@ -202,7 +234,7 @@ function updateParallax() {
    INTRO ANIMATION — murder in the alley
    ───────────────────────────────────────────── */
 function startIntroSequence() {
-  if (prefersReducedMotion) { showContinuePrompt(); return; }
+  if (prefersReducedMotion()) { showContinuePrompt(); return; }
 
   const { introMurderer: murderer, introShooting: shooting,
           introVictim: victimAlive, introVictimDead: victimDead,
@@ -574,7 +606,7 @@ function initHorizontalScroll() {
 
   // ── GSAP TEXT ANIMATIONS for chapter panels ──
   // Only run if user hasn't requested reduced motion
-  if (!prefersReducedMotion) {
+  if (!prefersReducedMotion()) {
     initChapterTextAnimations(track, totalWidth);
   }
 }
@@ -603,71 +635,106 @@ function initChapterTextAnimations(track, totalWidth) {
     });
   }
 
-  // ── CH2 panel: TYPEWRITER — each line types itself in from nothing ──
+  // ── CH2 panel: INTERROGATION ROOM — lamp flickers on, panel slams from dark ──
   const ch2panel = document.querySelector('#chapter-2 .text-panel');
   if (ch2panel) {
     const ch2Items = Array.from(ch2panel.querySelectorAll(
       '.chapter-label,.chapter-title,.chapter-subtitle,.chapter-body,.code-block'
     ));
-    // Start hidden, clipped to zero width
-    gsap.set(ch2Items, { opacity: 0, clipPath: 'inset(0 100% 0 0)', x: 0 });
+
+    // Initially dark, shifted right, angled
+    gsap.set(ch2panel, { opacity: 0, x: 60, rotation: -3, filter: 'brightness(0.05)' });
+    gsap.set(ch2Items, { opacity: 0, x: 14 });
+
     ScrollTrigger.create({
       trigger: '#chapter-2',
-      containerAnimation: mainTween,
-      start: 'left 75%',
+      containerAnimation: window._mainScrollTween,
+      start: 'left 70%',
       once: true,
       onEnter: () => {
-        // Each element sweeps open like a typewriter reveal
-        gsap.to(ch2Items, {
-          opacity: 1,
-          clipPath: 'inset(0 0% 0 0)',
-          duration: 0.6,
-          stagger: 0.14,
-          ease: 'power2.inOut'
-        });
-        // Code block gets terminal flicker after text loads
-        const cb2 = ch2panel.querySelector('.code-block');
-        if (cb2) {
-          gsap.to(cb2, {
-            boxShadow: '0 0 20px rgba(0,255,65,.3)',
-            duration: 1.4, yoyo: true, repeat: -1, ease: 'sine.inOut',
-            delay: 0.8
+        if (prefersReducedMotion()) {
+          // Reduced: just fade in with no drama
+          gsap.to(ch2panel, { opacity: 1, x: 0, rotation: 0, filter: 'brightness(1)', duration: 0.6 });
+          gsap.to(ch2Items, { opacity: 1, x: 0, stagger: 0.06, duration: 0.4, delay: 0.3 });
+          return;
+        }
+
+        const tl = gsap.timeline();
+
+        // 1. Dossier slaps onto table — slides in, still dark
+        tl.to(ch2panel, { opacity: 1, x: 0, rotation: -1.5, duration: 0.28, ease: 'power4.out' });
+
+        // 2. Lamp flicker — rapid brightness bursts like a fluorescent tube warming up
+        tl.to(ch2panel, { filter: 'brightness(0.5)',  duration: 0.055 })
+          .to(ch2panel, { filter: 'brightness(0.03)', duration: 0.07  })
+          .to(ch2panel, { filter: 'brightness(0.8)',  duration: 0.045 })
+          .to(ch2panel, { filter: 'brightness(0.1)',  duration: 0.09  })
+          .to(ch2panel, { filter: 'brightness(1.15)', duration: 0.06  })
+          .to(ch2panel, { filter: 'brightness(0.4)',  duration: 0.05  })
+          .to(ch2panel, { filter: 'brightness(1)',    duration: 0.35, ease: 'power2.out' });
+
+        // 3. Panel settles to straight — detective leans in
+        tl.to(ch2panel, { rotation: 0, duration: 0.5, ease: 'elastic.out(1, 0.6)' }, '-=0.2');
+
+        // 4. Each text line snaps into place like a typewriter carriage
+        tl.to(ch2Items, {
+          opacity: 1, x: 0,
+          duration: 0.35, stagger: 0.1, ease: 'power3.out'
+        }, '-=0.3');
+
+        // 5. Amber interrogation glow pulses on the border — the hot lamp above
+        tl.to(ch2panel, {
+          borderColor: 'rgba(255,160,0,.7)',
+          boxShadow: '0 0 32px rgba(255,120,0,.22), inset 0 0 18px rgba(255,140,0,.05)',
+          duration: 1.4, ease: 'sine.inOut', yoyo: true, repeat: -1
+        }, '+=0.1');
+
+        // 6. Code block terminal glow
+        const cb = ch2panel.querySelector('.code-block');
+        if (cb) {
+          gsap.to(cb, {
+            boxShadow: '0 0 16px rgba(0,255,65,.38), inset 0 0 8px rgba(0,255,65,.06)',
+            duration: 1.7, yoyo: true, repeat: -1, ease: 'sine.inOut', delay: 1.5
           });
         }
       }
     });
   }
 
-  // ── CH3 panel: SLAMS DOWN like a pinned note, then rotates into place ──
+  // ── CH3 panel: CENTER — spins in from above like a pinned note dropped on the board ──
   const ch3panel = document.querySelector('#ch3-text-panel');
   if (ch3panel) {
-    gsap.set(ch3panel, { opacity: 0, y: -100, rotation: -12, scale: 0.75, transformOrigin: 'top left' });
+    // CSS positions at top:50% left:50% translate(-50%,-50%). 
+    // GSAP from: scaled down, rotated, invisible — CSS transform handles centering.
+    gsap.set(ch3panel, { opacity: 0, scale: 0.5, rotation: -18, transformOrigin: 'center center' });
     ScrollTrigger.create({
       trigger: '#chapter-3',
-      containerAnimation: mainTween,
+      containerAnimation: window._mainScrollTween,
       start: 'left 80%',
       once: true,
       onEnter: () => {
-        // Slam down with overshoot, then settle into slight tilt
+        if (prefersReducedMotion()) {
+          gsap.to(ch3panel, { opacity: 1, scale: 1, rotation: 0, duration: 0.4 });
+          return;
+        }
+        // Spin down, overshoot with bounce
         gsap.to(ch3panel, {
-          opacity: 1, y: 0, rotation: 1.5, scale: 1,
-          duration: 0.65, ease: 'back.out(2.8)'
+          opacity: 1, scale: 1, rotation: 1.8,
+          duration: 0.7, ease: 'back.out(3.2)'
         });
-        // Corkboard shudder
+        // Corkboard shudder on impact
         const board = document.querySelector('#corkboard');
         if (board) {
           gsap.fromTo(board, { y: 0 },
-            { y: -6, duration: 0.06, yoyo: true, repeat: 5, ease: 'none', delay: 0.55 }
+            { y: -5, duration: 0.06, yoyo: true, repeat: 5, ease: 'none', delay: 0.6 }
           );
         }
-        // Panel thumps with a glow flash on land
-        setTimeout(() => {
-          gsap.fromTo(ch3panel,
-            { boxShadow: '0 0 0 rgba(61,127,255,0)' },
-            { boxShadow: '0 0 35px rgba(61,127,255,.7)', duration: 0.25,
-              yoyo: true, repeat: 1, ease: 'power2.out' }
-          );
-        }, 600);
+        // Blue flash on landing
+        gsap.fromTo(ch3panel,
+          { boxShadow: '0 0 0 2px rgba(61,127,255,0)' },
+          { boxShadow: '0 0 40px 4px rgba(61,127,255,.75)', duration: 0.22,
+            yoyo: true, repeat: 1, ease: 'power2.out', delay: 0.65 }
+        );
       }
     });
   }
@@ -813,7 +880,7 @@ function initCh1StickyText() {
   window._ch1Slammed  = false;
   window._ch1Visible  = true;
 
-  if (prefersReducedMotion) {
+  if (prefersReducedMotion()) {
     items.forEach(el => { el.style.opacity = '1'; el.style.transform = ''; });
     return;
   }
@@ -840,7 +907,7 @@ function updateCh1Text(p) {
     if (window._ch1Slammed) {
       window._ch1Slammed = false;
       window._ch1Visible = true;
-      if (!prefersReducedMotion) {
+      if (!prefersReducedMotion()) {
         gsap.fromTo(panel,
           { x: -1100, opacity: 0, rotation: -8, skewX: -14 },
           { x: 0, opacity: 1, rotation: 0, skewX: 0,
@@ -858,7 +925,7 @@ function updateCh1Text(p) {
     const t = (p - S) / (E - S);
     const e = t * t * t;
     panel.style.pointerEvents = 'none';
-    if (!prefersReducedMotion) {
+    if (!prefersReducedMotion()) {
       gsap.set(panel, {
         x:       -e * 1200,
         opacity: Math.max(0, 1 - t * 1.6),
@@ -1082,7 +1149,7 @@ function initChapter3_EvidenceWeb() {
                 const lastCenter  = getElementCenter(clickedBoardItems[clickedBoardItems.length - 1], br);
                 drawString(svg, lastCenter.x, lastCenter.y, panelCenter.x, panelCenter.y, 'rgba(61,127,255,0.85)');
                 // Pulse the text panel to celebrate completion
-                if (!prefersReducedMotion) {
+                if (!prefersReducedMotion()) {
                   gsap.fromTo(textPin,
                     { boxShadow: '0 0 0px rgba(61,127,255,0)' },
                     { boxShadow: '0 0 40px rgba(61,127,255,0.8)', duration: 0.5, yoyo: true, repeat: 3,
@@ -1291,7 +1358,7 @@ function developPhotos() {
 
 /* Water drip animation — simulates photos fresh out of developing bath */
 function animateWaterDrip(canvas) {
-  if (!canvas || prefersReducedMotion) return;
+  if (!canvas || prefersReducedMotion()) return;
   const W = canvas.width;
   const H = canvas.height;
   const ctx = canvas.getContext('2d');
@@ -1411,16 +1478,58 @@ function initChapter5_CaseFile() {
   const loadBtn = document.querySelector('#load-btn');
   const status  = document.querySelector('#storage-status');
 
-  // Inject random murderer reveal into the overview page
+  // ── MURDERER REVEAL — only unlocks once all clues found + all suspects questioned ──
   const folderTitle = document.querySelector('.folder-title');
   if (folderTitle) {
-    const murdererKey = pickMurderer();
-    const mData = MURDERER_DATA[murdererKey];
     const revealEl = document.createElement('div');
+    revealEl.id = 'murderer-reveal-box';
     revealEl.style.cssText = 'margin-top:14px;padding:10px 14px;background:rgba(139,0,0,.08);border-left:3px solid #8b0000;font-family:var(--font-ui);font-size:.7rem;';
-    revealEl.innerHTML = `<div style="font-size:.55rem;letter-spacing:.2em;color:#8b5020;text-transform:uppercase;margin-bottom:4px;">DETECTIVE'S CONCLUSION</div><div style="color:#8b0000;font-weight:bold;font-size:.85rem;font-family:var(--font-display);">THE MURDERER: ${mData.name}</div><div style="color:#5c2000;font-size:.7rem;line-height:1.6;margin-top:4px;">${mData.reason}</div>`;
     const divider = folderTitle.nextElementSibling;
     if (divider) divider.after(revealEl);
+
+    let revealDone = false;
+
+    function updateReveal() {
+      const cluesOk    = cluesFound >= 5;
+      const suspectsOk = suspectsInterrogated >= 4;
+
+      if (cluesOk && suspectsOk) {
+        if (revealDone) return; // don't re-run animation
+        revealDone = true;
+        const murdererKey = pickMurderer();
+        const mData = MURDERER_DATA[murdererKey];
+        revealEl.innerHTML =
+          `<div style="font-size:.52rem;letter-spacing:.2em;color:#8b5020;text-transform:uppercase;margin-bottom:5px;">🔎 DETECTIVE'S CONCLUSION</div>` +
+          `<div style="color:#8b0000;font-weight:bold;font-size:.88rem;font-family:var(--font-display);margin-bottom:4px;">THE MURDERER: ${mData.name}</div>` +
+          `<div style="color:#5c2000;font-size:.7rem;line-height:1.65;">${mData.reason}</div>`;
+        // Dramatic reveal animation — redacted-stamp effect
+        gsap.fromTo(revealEl,
+          { opacity: 0, scaleX: 0, transformOrigin: 'left center' },
+          { opacity: 1, scaleX: 1, duration: 0.65, ease: 'power3.out', delay: 0.2 }
+        );
+        console.log('%c🔎 CASE SOLVED! Murderer: ' + mData.name, 'color:#cc0000;font-weight:bold;font-size:13px;');
+      } else {
+        // Show progress — motivate the player to go back
+        const cluesLeft    = Math.max(0, 5 - cluesFound);
+        const suspectsLeft = Math.max(0, 4 - suspectsInterrogated);
+        revealEl.innerHTML =
+          `<div style="font-size:.52rem;letter-spacing:.18em;color:#8b5020;text-transform:uppercase;margin-bottom:5px;">⏳ CASE NOT YET CLOSED</div>` +
+          (cluesLeft > 0
+            ? `<div style="color:#5c2000;font-size:.7rem;margin-bottom:3px;">🔍 ${cluesLeft} clue${cluesLeft > 1 ? 's' : ''} still missing in The Alley</div>`
+            : `<div style="color:#005a00;font-size:.7rem;margin-bottom:3px;">✅ All clues collected</div>`) +
+          (suspectsLeft > 0
+            ? `<div style="color:#5c2000;font-size:.7rem;margin-bottom:3px;">🕵 ${suspectsLeft} suspect${suspectsLeft > 1 ? 's' : ''} not yet interrogated</div>`
+            : `<div style="color:#005a00;font-size:.7rem;margin-bottom:3px;">✅ All suspects questioned</div>`) +
+          `<div style="color:#8b5020;font-size:.62rem;margin-top:6px;font-style:italic;">Return to complete your investigation.</div>`;
+      }
+    }
+
+    updateReveal();
+    // Poll every 1.5 s in case player goes back and does more
+    const pollInterval = setInterval(() => {
+      if (revealDone) { clearInterval(pollInterval); return; }
+      updateReveal();
+    }, 1500);
   }
 
   document.querySelectorAll('.folder-tab').forEach(tab => {
@@ -1476,7 +1585,7 @@ function initChapter5_CaseFile() {
    ───────────────────────────────────────────── */
 function initRain(canvasId) {
   const canvas = document.querySelector('#' + canvasId);
-  if (!canvas || prefersReducedMotion) return;
+  if (!canvas || prefersReducedMotion()) return;
   const ctx = canvas.getContext('2d');
   canvas.width  = canvas.offsetWidth  || window.innerWidth;
   canvas.height = canvas.offsetHeight || window.innerHeight;

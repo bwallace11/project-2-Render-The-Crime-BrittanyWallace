@@ -40,7 +40,9 @@
     <div class="hm-section-label">THEME</div>
     <button class="hm-item" id="theme-dark"   data-theme-choice="dark"   role="menuitem">🌑 Dark Mode</button>
     <button class="hm-item" id="theme-light"  data-theme-choice="light"  role="menuitem">🔦 UV Blacklight</button>
-    <button class="hm-item" id="theme-system" data-theme-choice="system" role="menuitem">⚙️ System Preference</button>
+    <button class="hm-item" id="theme-system" data-theme-choice="system" role="menuitem">⚙️ System</button>
+    <div class="hm-section-label" style="margin-top:6px;">ACCESSIBILITY</div>
+    <button class="hm-item" id="reduce-motion-btn" role="menuitem" aria-pressed="false">🎬 Reduce Motion</button>
   </div>
 
   <div id="scroll-hint" aria-hidden="true">
@@ -508,14 +510,15 @@ console.log("Clue:", clue);</div>
           CLICK CARDS &amp; PHOTOS — WATCH THE WEB FORM
         </div>
 
-        <!-- Text panel TOP-LEFT — strings connect TO this last after all items linked -->
-        <div class="text-panel" id="ch3-text-panel" style="position:absolute;top:12px;left:12px;z-index:6;background:rgba(3,2,10,.93);border:1px solid rgba(61,127,255,.18);padding:16px 18px;max-width:200px;pointer-events:none;">
+        <!-- Text panel CENTER — in the clear zone between top cards and bottom photos.
+             GSAP animates entry; position is absolute center of the board. -->
+        <div class="text-panel" id="ch3-text-panel" style="position:absolute;top:50%;left:50%;z-index:7;transform:translate(-50%,-50%);background:rgba(3,2,10,.95);border:1px solid rgba(61,127,255,.25);padding:14px 16px;max-width:185px;pointer-events:none;text-align:center;">
           <div class="pin" style="position:absolute;background:var(--color-blue-neon);box-shadow:0 0 8px var(--color-blue-neon);top:-8px;left:50%;transform:translateX(-50%);width:11px;height:11px;border-radius:50%;"></div>
-          <p class="chapter-label" style="font-size:.5rem;">Chapter 03 — The System</p>
-          <h2 class="chapter-title" id="ch3-title" style="font-size:1.2rem;margin-bottom:6px;">The Crime<br>Board</h2>
-          <p class="chapter-subtitle" style="font-size:.75rem;margin-bottom:8px;">data-* attributes</p>
-          <p class="chapter-body" style="font-size:.68rem;line-height:1.6;">Click every card &amp; photo to build the web. JS reads <code style="color:var(--color-green-term)">dataset</code> on each. The last string links back here.</p>
-          <div class="code-block" style="font-size:.57rem;margin-top:10px;">card.dataset.info
+          <p class="chapter-label" style="font-size:.46rem;justify-content:center;">Chapter 03 — The System</p>
+          <h2 class="chapter-title" id="ch3-title" style="font-size:1.05rem;margin-bottom:4px;line-height:1.1;">The Crime<br>Board</h2>
+          <p class="chapter-subtitle" style="font-size:.68rem;margin-bottom:5px;">data-* attributes</p>
+          <p class="chapter-body" style="font-size:.63rem;line-height:1.5;">Click every card &amp; photo. JS reads <code style="color:var(--color-green-term)">dataset</code> on each pin. Final string links here.</p>
+          <div class="code-block" style="font-size:.52rem;margin-top:8px;padding:7px 9px;text-align:left;">card.dataset.info
 // → "2:17 AM"
 svg.appendChild(line);</div>
         </div>
