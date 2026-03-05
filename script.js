@@ -547,7 +547,7 @@ function initHorizontalScroll() {
   const totalWidth = track.scrollWidth - window.innerWidth;
   if (totalWidth <= 0) { requestAnimationFrame(initHorizontalScroll); return; }
 
-  gsap.to(track, {
+  const mainTween = gsap.to(track, {
     x: -totalWidth, ease: 'none',
     scrollTrigger: {
       trigger: '#scroll-wrapper',
@@ -564,15 +564,120 @@ function initHorizontalScroll() {
     }
   });
 
+  window._mainScrollTween = mainTween;
+
   initChapter1_Flashlight();
   initChapter2_Interrogation();
   initChapter3_EvidenceWeb();
   initChapter4_Darkroom();
   initChapter5_CaseFile();
+
+  // ── GSAP TEXT ANIMATIONS for chapter panels ──
+  // Only run if user hasn't requested reduced motion
+  if (!prefersReducedMotion) {
+    initChapterTextAnimations(track, totalWidth);
+  }
 }
 
 function updateNavDots(activeIdx) {
   document.querySelectorAll('.nav-dot').forEach((dot, i) => dot.classList.toggle('active', i === activeIdx));
+}
+
+
+/* ─────────────────────────────────────────────
+   CHAPTER TEXT ANIMATIONS — GSAP powered
+   Each chapter's text panel gets a unique cinematic
+   entrance animation triggered by horizontal scroll.
+   ───────────────────────────────────────────── */
+function initChapterTextAnimations(track, totalWidth) {
+  const mainTween = window._mainScrollTween;
+  if (!mainTween) return;
+
+  // Ch2 interrogation panel — slides in from right with a lurch
+  const ch2panel = document.querySelector('#chapter-2 .text-panel');
+  if (ch2panel) {
+    const ch2Items = ch2panel.querySelectorAll('.chapter-label,.chapter-title,.chapter-subtitle,.chapter-body,.code-block');
+    gsap.set(ch2Items, { opacity: 0, x: 220, skewX: 12 });
+    ScrollTrigger.create({
+      trigger: '#chapter-2',
+      containerAnimation: mainTween,
+      start: 'left 85%',
+      once: true,
+      onEnter: () => {
+        gsap.to(ch2Items, {
+          opacity: 1, x: 0, skewX: 0,
+          duration: 0.7, stagger: 0.1, ease: 'power4.out'
+        });
+      }
+    });
+  }
+
+  // Ch3 center text panel — drops from above with bounce
+  // xPercent/yPercent shift by percentage of the element's own size → proper centering
+  const ch3panel = document.querySelector('#ch3-text-panel');
+  if (ch3panel) {
+    // Set initial centered + animated-in state
+    gsap.set(ch3panel, { xPercent: -50, yPercent: -150, rotation: -6, scale: 0.85, opacity: 0 });
+    ScrollTrigger.create({
+      trigger: '#chapter-3',
+      containerAnimation: mainTween,
+      start: 'left 80%',
+      once: true,
+      onEnter: () => {
+        gsap.to(ch3panel, {
+          xPercent: -50, yPercent: -50, rotation: 0, scale: 1, opacity: 1,
+          duration: 0.8, ease: 'back.out(2.2)'
+        });
+        // Thud shake
+        const board = document.querySelector('#corkboard');
+        if (board) {
+          gsap.fromTo(board,
+            { y: 0 },
+            { y: -6, duration: 0.08, yoyo: true, repeat: 5, ease: 'none', delay: 0.7 }
+          );
+        }
+      }
+    });
+  }
+
+  // Ch4 darkroom panel — materialises out of darkness
+  const ch4panel = document.querySelector('#ch4-text-panel');
+  if (ch4panel) {
+    const ch4Items = ch4panel.querySelectorAll('.chapter-label,.chapter-title,.chapter-subtitle,.chapter-body,.code-block');
+    gsap.set(ch4panel, { opacity: 0, scale: 0.92 });
+    ScrollTrigger.create({
+      trigger: '#chapter-4',
+      containerAnimation: mainTween,
+      start: 'left 80%',
+      once: true,
+      onEnter: () => {
+        gsap.to(ch4panel, { opacity: 1, scale: 1, duration: 1.4, ease: 'power3.out' });
+        gsap.fromTo(ch4Items,
+          { opacity: 0, y: 18 },
+          { opacity: 1, y: 0, stagger: 0.15, duration: 0.9, ease: 'power2.out', delay: 0.4 }
+        );
+      }
+    });
+  }
+
+  // Ch5 label — slams in staggered
+  const ch5label = document.querySelector('#ch5-label');
+  if (ch5label) {
+    const ch5parts = ch5label.querySelectorAll('.chapter-label,.chapter-title,.chapter-subtitle');
+    gsap.set(ch5parts, { opacity: 0, y: 30, rotation: 3 });
+    ScrollTrigger.create({
+      trigger: '#chapter-5',
+      containerAnimation: mainTween,
+      start: 'left 80%',
+      once: true,
+      onEnter: () => {
+        gsap.to(ch5parts, {
+          opacity: 1, y: 0, rotation: 0,
+          stagger: 0.18, duration: 0.8, ease: 'power4.out'
+        });
+      }
+    });
+  }
 }
 
 
@@ -635,77 +740,87 @@ function initChapter1_Flashlight() {
 
 
 /* ─────────────────────────────────────────────
-   CH1 STICKY TEXT — force fixed position via JS
-   Items slam in staggered on enter.
-   Panel slams into left wall when scrolling to ch2.
-   Slams back in when scrolling back.
+   CH1 STICKY TEXT — GSAP ScrollTrigger pin
+   Panel sticks with scroll, slams out to left wall when
+   leaving Ch1, slams back when scrolling back.
    ───────────────────────────────────────────── */
 function initCh1StickyText() {
   const panel = document.querySelector('#ch1-text-panel');
   if (!panel) return;
 
-  // Force fixed positioning via JS style (overrides .text-panel absolute)
+  // Force fixed positioning — override .text-panel absolute
   panel.style.cssText = 'position:fixed!important;left:28px;top:60px;z-index:1000;max-width:380px;padding:28px 24px;';
 
-  const items = Array.from(panel.querySelectorAll('.chapter-label,.chapter-title,.chapter-subtitle,.chapter-body,.code-block,.metaphor-line'));
+  const items = Array.from(panel.querySelectorAll(
+    '.chapter-label,.chapter-title,.chapter-subtitle,.chapter-body,.code-block,.metaphor-line'
+  ));
+
+  window._ch1Panel    = panel;
+  window._ch1Slammed  = false;
+  window._ch1Visible  = true;
 
   if (prefersReducedMotion) {
-    items.forEach(el => { el.style.opacity='1'; el.style.transform=''; });
-    window._ch1Panel = panel;
-    window._ch1Slammed = false;
+    items.forEach(el => { el.style.opacity = '1'; el.style.transform = ''; });
     return;
   }
 
-  // SLAM IN: each line flies in from the left wall, staggered
+  // SLAM IN: each line flies in from the left, staggered
   gsap.set(items, { opacity: 0, x: -180, skewX: -10, rotation: -2 });
   gsap.to(items, {
     opacity: 1, x: 0, skewX: 0, rotation: 0,
-    duration: 0.65,
-    stagger: 0.1,
-    ease: 'power4.out',
-    delay: 0.5
+    duration: 0.65, stagger: 0.1, ease: 'power4.out', delay: 0.5
   });
-
-  window._ch1Panel = panel;
-  window._ch1Slammed = false;
 }
 
-// Called every frame from the main ScrollTrigger onUpdate
+// Called from main ScrollTrigger onUpdate — p = 0..1 global scroll progress
 function updateCh1Text(p) {
   const panel = window._ch1Panel;
   if (!panel) return;
 
-  // Ch1 = progress 0 → ~0.205 (1/4.88 of scroll range with totalWidth math)
-  // Conservative: start exit at progress 0.11, fully gone by 0.22
-  const S = 0.11, E = 0.22;
+  // Ch1 occupies roughly 0..0.20 of total scroll width
+  // Begin exit at 0.13, fully gone by 0.21
+  const S = 0.13, E = 0.21;
 
   if (p <= S) {
+    // IN ZONE — slam back in if it was slammed out
     if (window._ch1Slammed) {
       window._ch1Slammed = false;
-      // SLAM BACK IN from left wall
-      gsap.fromTo(panel,
-        { x: -1100, opacity: 0, rotation: -8, skewX: -14 },
-        { x: 0,     opacity: 1, rotation: 0,  skewX: 0,
-          duration: 0.6, ease: 'back.out(1.4)',
-          onStart: () => { panel.style.pointerEvents = 'auto'; }
-        }
-      );
+      window._ch1Visible = true;
+      if (!prefersReducedMotion) {
+        gsap.fromTo(panel,
+          { x: -1100, opacity: 0, rotation: -8, skewX: -14 },
+          { x: 0, opacity: 1, rotation: 0, skewX: 0,
+            duration: 0.55, ease: 'back.out(1.4)',
+            onStart: () => { panel.style.pointerEvents = 'auto'; }
+          }
+        );
+      } else {
+        gsap.set(panel, { x: 0, opacity: 1 });
+        panel.style.pointerEvents = 'auto';
+      }
     }
   } else if (p < E) {
-    // SLAM OUT: accelerates into wall (cubic ease-in feel via manual t^3)
+    // TRANSITION ZONE — slam out into left wall
     const t = (p - S) / (E - S);
     const e = t * t * t;
     panel.style.pointerEvents = 'none';
-    gsap.set(panel, {
-      x:        -e * 1200,
-      opacity:  Math.max(0, 1 - t * 1.6),
-      rotation: -e * 12,
-      skewX:    -e * 18
-    });
+    if (!prefersReducedMotion) {
+      gsap.set(panel, {
+        x:       -e * 1200,
+        opacity: Math.max(0, 1 - t * 1.6),
+        rotation: -e * 12,
+        skewX:   -e * 18
+      });
+    } else {
+      gsap.set(panel, { opacity: Math.max(0, 1 - t * 2) });
+    }
     if (t > 0.9) window._ch1Slammed = true;
   } else {
-    gsap.set(panel, { x: -1200, opacity: 0, rotation: -12 });
-    window._ch1Slammed = true;
+    // PAST CH1 — fully hidden
+    if (!window._ch1Slammed) {
+      gsap.set(panel, { x: -1200, opacity: 0, rotation: -12 });
+      window._ch1Slammed = true;
+    }
     panel.style.pointerEvents = 'none';
   }
 }
@@ -846,10 +961,11 @@ function initChapter2_Interrogation() {
 
 /* ─────────────────────────────────────────────
    CHAPTER 3: CRIME BOARD
-   Web draws ON CLICK — lines connect clicked items to each other
-   Lines go BEHIND cards/photos (SVG z-index:4, cards z-index:6)
+   Lines connect each clicked item to the previous (chain).
+   After ALL items are clicked, the last item also connects
+   to the center text panel with a blue line.
+   Lines aim at pin points and truly touch each item.
    ───────────────────────────────────────────── */
-// Track which elements have been clicked so we can connect new ones to previous
 const clickedBoardItems = [];
 
 function initChapter3_EvidenceWeb() {
@@ -857,6 +973,20 @@ function initChapter3_EvidenceWeb() {
     ...document.querySelectorAll('.evidence-card'),
     ...document.querySelectorAll('.suspect-photo--board')
   ];
+
+  const TOTAL_ITEMS = allItems.length;
+
+  // Update corkboard SVG viewBox once layout is stable
+  function updateViewBox() {
+    const board = document.querySelector('#corkboard');
+    const svg   = document.querySelector('#evidence-strings');
+    if (board && svg) {
+      const r = board.getBoundingClientRect();
+      svg.setAttribute('viewBox', `0 0 ${r.width} ${r.height}`);
+    }
+  }
+  setTimeout(updateViewBox, 600);
+  window.addEventListener('resize', updateViewBox);
 
   allItems.forEach(item => {
     item.addEventListener('click', function() {
@@ -869,28 +999,47 @@ function initChapter3_EvidenceWeb() {
       console.log('%c📌 ' + (label || 'Item'), 'color: #ffaa00; font-weight:bold;');
       console.log('  dataset.info →', info);
 
-      const board   = document.querySelector('#corkboard');
-      const svg     = document.querySelector('#evidence-strings');
-      const textPin = document.querySelector('#ch3-text-panel');
+      const board = document.querySelector('#corkboard');
+      const svg   = document.querySelector('#evidence-strings');
 
       if (!clickedBoardItems.includes(this)) {
         if (board && svg) {
-          const boardRect = board.getBoundingClientRect();
-          const newCenter = getElementCenter(this, boardRect);
+          updateViewBox();
+          const boardRect  = board.getBoundingClientRect();
+          const newCenter  = getElementCenter(this, boardRect);
 
-          // Connect to previous item (chain)
+          // Connect chain: new item to previous item
           if (clickedBoardItems.length > 0) {
-            const prevCenter = getElementCenter(clickedBoardItems[clickedBoardItems.length - 1], boardRect);
-            drawString(svg, prevCenter.x, prevCenter.y, newCenter.x, newCenter.y);
+            const prev = clickedBoardItems[clickedBoardItems.length - 1];
+            const prevCenter = getElementCenter(prev, boardRect);
+            drawString(svg, prevCenter.x, prevCenter.y, newCenter.x, newCenter.y, 'rgba(180,10,0,0.75)');
           }
 
-          // ALSO connect this item to the center text panel
-          if (textPin) {
-            const panelCenter = getElementCenter(textPin, boardRect);
-            drawString(svg, newCenter.x, newCenter.y, panelCenter.x, panelCenter.y, 'rgba(61,127,255,0.5)');
+          clickedBoardItems.push(this);
+
+          // After ALL items clicked: connect last item → center text panel (blue)
+          if (clickedBoardItems.length === TOTAL_ITEMS) {
+            const textPin = document.querySelector('#ch3-text-panel');
+            if (textPin) {
+              setTimeout(() => {
+                updateViewBox();
+                const br = board.getBoundingClientRect();
+                const panelCenter = getElementCenter(textPin, br);
+                const lastCenter  = getElementCenter(clickedBoardItems[clickedBoardItems.length - 1], br);
+                drawString(svg, lastCenter.x, lastCenter.y, panelCenter.x, panelCenter.y, 'rgba(61,127,255,0.85)');
+                // Pulse the text panel to celebrate completion
+                if (!prefersReducedMotion) {
+                  gsap.fromTo(textPin,
+                    { boxShadow: '0 0 0px rgba(61,127,255,0)' },
+                    { boxShadow: '0 0 40px rgba(61,127,255,0.8)', duration: 0.5, yoyo: true, repeat: 3,
+                      ease: 'power2.inOut' }
+                  );
+                }
+                console.log('%c🔗 All evidence linked! Web complete.', 'color: #3d7fff; font-weight:bold;');
+              }, 200);
+            }
           }
         }
-        clickedBoardItems.push(this);
       }
     });
 
@@ -899,32 +1048,23 @@ function initChapter3_EvidenceWeb() {
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); this.click(); }
     });
   });
-
-  // Update SVG viewBox when layout settles
-  setTimeout(() => {
-    const board = document.querySelector('#corkboard');
-    const svg   = document.querySelector('#evidence-strings');
-    if (board && svg) {
-      const r = board.getBoundingClientRect();
-      svg.setAttribute('viewBox', `0 0 ${r.width} ${r.height}`);
-    }
-  }, 600);
-
-  // Crime board panel stays visible – it's part of the board, never hides
-  // The strings will draw around/behind it naturally
 }
 
 function getElementCenter(el, boardRect) {
   const r = el.getBoundingClientRect();
-  // For evidence cards, target the pin (top center); for photos target center
-  const isCard = el.classList.contains('evidence-card');
-  const isPhoto = el.classList.contains('suspect-photo--board');
-  return {
-    x: r.left + r.width  / 2 - boardRect.left,
-    y: isCard ? r.top + 6 - boardRect.top :  // aim at pin
-       isPhoto ? r.top + 20 - boardRect.top : // aim at pin
-       r.top  + r.height / 2 - boardRect.top
-  };
+  const cx = r.left + r.width  / 2 - boardRect.left;
+  const cy = r.top  + r.height / 2 - boardRect.top;
+
+  if (el.classList.contains('evidence-card')) {
+    // Aim at the pin at top-center of the card
+    return { x: cx, y: r.top - boardRect.top + 8 };
+  }
+  if (el.classList.contains('suspect-photo--board')) {
+    // Aim at the pin at top-center of the photo
+    return { x: cx, y: r.top - boardRect.top + 10 };
+  }
+  // Text panel: aim at its top-center pin
+  return { x: cx, y: r.top - boardRect.top + 8 };
 }
 
 function drawString(svg, x1, y1, x2, y2, color) {
@@ -1030,50 +1170,91 @@ function initChapter4_Darkroom() {
   });
 }
 
-/* Develop photos and evidence: stagger them in, then start drip animations */
+/* Develop photos and evidence: stagger them in, then start drip animations.
+   Text labels appear WITH their photo — one at a time, no overlap. */
 function developPhotos() {
-  // Develop suspect photos (brightness 0 → normal)
+  // Map photo IDs to their label content
+  const suspectLabelData = [
+    { photoId: 'drphoto-victim',    labelId: 'drlabel-victim',    text: 'VICTIM',      detail: 'Last known photo — 2:15 AM' },
+    { photoId: 'drphoto-doctor',    labelId: 'drlabel-doctor',    text: 'DR. HARLOW',  detail: 'On site 2:00 AM · Blackmail motive' },
+    { photoId: 'drphoto-widow',     labelId: 'drlabel-widow',     text: 'THE WIDOW',   detail: 'Alibi: unverified · Sole heir' },
+    { photoId: 'drphoto-butler',    labelId: 'drlabel-butler',    text: 'THE BUTLER',  detail: 'Had the only east key · 2:08 AM' },
+    { photoId: 'drphoto-nephew',    labelId: 'drlabel-nephew',    text: 'THE NEPHEW',  detail: 'Monogram D.M. · 6 blocks away' },
+  ];
+  const evidenceLabelData = [
+    { photoId: 'drphoto-footprints', labelId: 'drlabel-footprints', text: 'FOOTPRINTS',  detail: 'Size 11 boot · deep heel strike' },
+    { photoId: 'drphoto-shell',      labelId: 'drlabel-shell',      text: 'SHELL CASING', detail: '.38 cal · no serial number' },
+    { photoId: 'drphoto-matchbook',  labelId: 'drlabel-matchbook',  text: 'MATCHBOOK',   detail: 'Club Noir · Room 7 written inside' },
+    { photoId: 'drphoto-cigarette',  labelId: 'drlabel-cigarette',  text: 'CIGARETTE',   detail: 'Monogram: D.M. · expensive brand' },
+    { photoId: 'drphoto-fabric',     labelId: 'drlabel-fabric',     text: 'TORN FABRIC', detail: 'Dark wool blend · gold thread' },
+  ];
+
+  // Reveal a label element with GSAP
+  function revealLabel(labelId, text, detail, delay) {
+    const el = document.querySelector('#' + labelId);
+    if (!el) return;
+    el.innerHTML = `<strong>${text}</strong><br><span>${detail}</span>`;
+    setTimeout(() => {
+      if (!prefersReducedMotion) {
+        gsap.fromTo(el,
+          { opacity: 0, y: 8, filter: 'blur(4px)' },
+          { opacity: 1, y: 0, filter: 'blur(0px)', duration: 1.1, ease: 'power2.out' }
+        );
+      } else {
+        el.style.opacity = '1';
+      }
+      // Mark as permanently visible (stays on after lights come back)
+      el.classList.add('revealed');
+    }, delay);
+  }
+
+  // Develop suspect photos (brightness 0 → normal), show label with each
   document.querySelectorAll('.photo-frame img').forEach((img, i) => {
+    const delay = 600 + i * 550;
     setTimeout(() => {
       img.classList.add('developed');
-      // Start water drip on this photo's canvas
       const canvas = img.closest('.photo-frame').querySelector('.drip-canvas');
-      if (canvas) {
-        canvas.classList.add('active');
-        animateWaterDrip(canvas);
-      }
+      if (canvas) { canvas.classList.add('active'); animateWaterDrip(canvas); }
       console.log('%c🖼 Developing: ' + img.alt, 'color: #9b4dff;');
-    }, 600 + i * 550);
+    }, delay);
+
+    // Show label 400ms after photo starts developing
+    if (suspectLabelData[i]) {
+      const ld = suspectLabelData[i];
+      revealLabel(ld.labelId, ld.text, ld.detail, delay + 400);
+    }
   });
 
-  // Develop evidence SVG photos (opacity 0 → 1)
-  document.querySelectorAll('.evidence-photo-content').forEach((evidenceContent, i) => {
-    setTimeout(() => {
-      evidenceContent.classList.add('developed');
-      evidenceContent.style.opacity = '1';
-      const canvas = evidenceContent.closest('.photo-frame--evidence').querySelector('.drip-canvas');
-      if (canvas) {
-        canvas.classList.add('active');
-        animateWaterDrip(canvas);
-      }
-      // Reveal evidence label when photo develops
-      const label = evidenceContent.closest('.photo-frame--evidence').querySelector('.photo-evidence-label');
-      if (label) label.classList.add('revealed');
-      // Also reveal caption
-      const caption = evidenceContent.closest('.darkroom-photo').querySelector('.photo-caption');
-      if (caption) {
-        gsap.fromTo(caption, { opacity: 0 }, { opacity: 1, duration: 1.2, delay: 0.5 });
-        console.log('%c🖼 Evidence developing: ' + caption.textContent, 'color: #9b4dff;');
-      }
-    }, 800 + i * 450);
-  });
-
-  // Also reveal labels on suspect photos
+  // Reveal evidence labels on suspect photos slightly after
   document.querySelectorAll('.photo-frame img').forEach((img, i) => {
     setTimeout(() => {
       const label = img.closest('.photo-frame').querySelector('.photo-evidence-label');
       if (label) label.classList.add('revealed');
     }, 600 + i * 550 + 600);
+  });
+
+  // Develop evidence SVG photos (opacity 0 → 1), show label with each
+  document.querySelectorAll('.evidence-photo-content').forEach((evidenceContent, i) => {
+    const delay = 800 + i * 450;
+    setTimeout(() => {
+      evidenceContent.classList.add('developed');
+      evidenceContent.style.opacity = '1';
+      const canvas = evidenceContent.closest('.photo-frame--evidence').querySelector('.drip-canvas');
+      if (canvas) { canvas.classList.add('active'); animateWaterDrip(canvas); }
+      const label = evidenceContent.closest('.photo-frame--evidence').querySelector('.photo-evidence-label');
+      if (label) label.classList.add('revealed');
+      const caption = evidenceContent.closest('.darkroom-photo').querySelector('.photo-caption');
+      if (caption) {
+        gsap.fromTo(caption, { opacity: 0 }, { opacity: 1, duration: 1.2, delay: 0.5 });
+        console.log('%c🖼 Evidence developing: ' + caption.textContent, 'color: #9b4dff;');
+      }
+    }, delay);
+
+    // Show develop label with this evidence photo
+    if (evidenceLabelData[i]) {
+      const ld = evidenceLabelData[i];
+      revealLabel(ld.labelId, ld.text, ld.detail, delay + 350);
+    }
   });
 }
 

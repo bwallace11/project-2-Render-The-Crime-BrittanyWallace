@@ -339,10 +339,15 @@ console.log("Clue:", clue);</div>
         <p class="metaphor-line">"The case talks back to me."</p>
       </div>
 
+      <!-- Mobile-only text panel (shown on very small screens when fixed panel is hidden) -->
+      <div id="ch1-mobile-text" style="display:none;position:absolute;bottom:180px;left:0;right:0;padding:16px;z-index:35;background:rgba(3,2,10,.88);border-top:1px solid rgba(61,127,255,.2);" aria-label="Chapter 1 information">
+        <p style="font-family:var(--font-ui);font-size:.6rem;letter-spacing:.2em;color:var(--color-smoke);">Chapter 01 — First Contact</p>
+        <h2 style="font-family:var(--font-display);font-size:1.4rem;color:var(--color-white);margin:4px 0;">The Alley</h2>
+        <p style="font-family:var(--font-ui);font-size:.7rem;color:var(--color-blue-glow);margin-bottom:8px;">console.log · let · const</p>
+        <p style="font-size:.82rem;line-height:1.6;color:var(--color-mist);">Find all 5 clues. Watch the console panel update live each time you find one.</p>
+      </div>
+
     </article>
-
-
-    <!-- ═══ CH 2: INTERROGATION ROOM ═══ -->
     <article class="chapter chapter--2" id="chapter-2" aria-labelledby="ch2-title">
 
       <!-- Lamp + downward light cone -->
@@ -503,14 +508,14 @@ console.log("Clue:", clue);</div>
           CLICK CARDS &amp; PHOTOS — WATCH THE WEB FORM
         </div>
 
-        <!-- Text panel INSIDE corkboard so strings can connect to it -->
-        <div class="text-panel" id="ch3-text-panel" style="position:absolute;top:8px;right:8px;z-index:6;background:rgba(3,2,10,.92);border:1px solid rgba(61,127,255,.15);padding:16px;max-width:220px;pointer-events:none;">
-          <div class="pin" style="background:var(--color-blue-neon);box-shadow:0 0 8px var(--color-blue-neon);"></div>
-          <p class="chapter-label">Chapter 03 — The System</p>
-          <h2 class="chapter-title" id="ch3-title" style="font-size:1.4rem;">The Crime<br>Board</h2>
-          <p class="chapter-subtitle" style="font-size:.87rem;">data-* attributes</p>
-          <p class="chapter-body" style="font-size:.79rem;">Every pin hides a secret in HTML. Click cards or suspect photos — JS reads the <code style="color:var(--color-green-term)">dataset</code> property to surface it. Each new click draws a red string connecting evidence.</p>
-          <div class="code-block" style="font-size:.65rem;">&lt;div data-info="2:17 AM"&gt;
+        <!-- Text panel centered on board — strings connect TO this last -->
+        <div class="text-panel" id="ch3-text-panel" style="position:absolute;top:50%;left:50%;z-index:6;background:rgba(3,2,10,.93);border:1px solid rgba(61,127,255,.18);padding:18px 16px;max-width:210px;pointer-events:none;text-align:center;">
+          <div class="pin" style="background:var(--color-blue-neon);box-shadow:0 0 8px var(--color-blue-neon);top:-8px;left:50%;transform:translateX(-50%);"></div>
+          <p class="chapter-label" style="font-size:.52rem;">Chapter 03 — The System</p>
+          <h2 class="chapter-title" id="ch3-title" style="font-size:1.3rem;">The Crime<br>Board</h2>
+          <p class="chapter-subtitle" style="font-size:.8rem;">data-* attributes</p>
+          <p class="chapter-body" style="font-size:.72rem;">Every pin hides a secret in HTML. Click cards or suspect photos — JS reads the <code style="color:var(--color-green-term)">dataset</code> property to surface it. Each new click draws a red string connecting evidence to this panel.</p>
+          <div class="code-block" style="font-size:.6rem;text-align:left;">&lt;div data-info="2:17 AM"&gt;
 
 // JS reads hidden data:
 card.dataset.info
@@ -787,6 +792,19 @@ getComputedStyle(root)
 // Every element using that
 // variable updates immediately.</div>
       </div>
+
+      <!-- Darkroom develop reveal text — shown staggered as photos develop -->
+      <!-- Each label is absolutely positioned below its photo, starts hidden, revealed by JS -->
+      <div class="dr-develop-label" id="drlabel-victim"     style="left:3%;top:298px;"    aria-live="polite"></div>
+      <div class="dr-develop-label" id="drlabel-doctor"     style="left:17%;top:298px;"   aria-live="polite"></div>
+      <div class="dr-develop-label" id="drlabel-widow"      style="left:31%;top:298px;"   aria-live="polite"></div>
+      <div class="dr-develop-label" id="drlabel-butler"     style="left:46%;top:298px;"   aria-live="polite"></div>
+      <div class="dr-develop-label" id="drlabel-nephew"     style="left:61%;top:298px;"   aria-live="polite"></div>
+      <div class="dr-develop-label" id="drlabel-footprints" style="left:4%;top:500px;"    aria-live="polite"></div>
+      <div class="dr-develop-label" id="drlabel-shell"      style="left:20%;top:500px;"   aria-live="polite"></div>
+      <div class="dr-develop-label" id="drlabel-matchbook"  style="left:36%;top:500px;"   aria-live="polite"></div>
+      <div class="dr-develop-label" id="drlabel-cigarette"  style="left:52%;top:500px;"   aria-live="polite"></div>
+      <div class="dr-develop-label" id="drlabel-fabric"     style="left:68%;top:500px;"   aria-live="polite"></div>
 
     </article>
 

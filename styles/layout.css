@@ -922,16 +922,86 @@ body {
   #ch1-mobile-text { display: block !important; }
 }
 
-/* Board center label */
-#ch3-center-label {
-  position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-  z-index: 50; text-align: center; pointer-events: none;
-  font-family: var(--font-display); color: var(--color-amber);
-  text-shadow: var(--shadow-text-amber);
-  opacity: 0; transition: opacity 0.4s;
+/* ── DARKROOM DEVELOP LABELS ── */
+/* These appear staggered WITH each photo. They persist after lights on. */
+.dr-develop-label {
+  position: absolute;
+  z-index: 25;
+  font-family: var(--font-ui);
+  font-size: .62rem;
+  line-height: 1.5;
+  letter-spacing: .08em;
+  color: var(--color-amber);
+  text-shadow: 0 0 8px rgba(255,170,0,.5);
+  text-transform: uppercase;
+  background: rgba(3,2,10,.75);
+  border: 1px solid rgba(255,170,0,.18);
+  border-radius: 2px;
+  padding: 5px 8px;
+  max-width: 130px;
+  opacity: 0;
+  pointer-events: none;
+  /* Never auto-hide — stays visible once revealed */
 }
-#ch3-center-label.hidden { opacity: 0; }
-#ch3-center-label.visible { opacity: 1; }
+.dr-develop-label.revealed {
+  /* JS handles fade-in; CSS keeps it visible forever after */
+}
+.dr-develop-label strong {
+  display: block;
+  color: var(--color-amber);
+  font-size: .68rem;
+  letter-spacing: .12em;
+  margin-bottom: 2px;
+}
+.dr-develop-label span {
+  color: var(--color-smoke);
+  font-size: .58rem;
+}
+[data-theme="light"] .dr-develop-label {
+  background: rgba(244,240,232,.92);
+  border-color: rgba(123,47,255,.25);
+  color: var(--color-blue-neon);
+  text-shadow: var(--shadow-text-blue);
+}
+[data-theme="light"] .dr-develop-label strong { color: var(--color-blue-neon); }
+[data-theme="light"] .dr-develop-label span   { color: var(--color-smoke); }
+
+@media (prefers-reduced-motion: reduce) {
+  .dr-develop-label { transition: none !important; }
+}
+
+/* ── CRIME BOARD CENTER PANEL — centered, higher z so strings draw behind it ── */
+#ch3-text-panel {
+  transform: rotate(0deg) !important; /* override the 1.5deg rotation when centered */
+  text-align: center;
+}
+/* Keep pin centered */
+#ch3-text-panel .pin {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* Mobile adjustments for darkroom labels */
+@media (max-width: 768px) {
+  .dr-develop-label {
+    font-size: .52rem;
+    max-width: 90px;
+    padding: 3px 5px;
+  }
+  #ch3-text-panel {
+    max-width: 160px !important;
+    padding: 12px 10px !important;
+    font-size: 0.72rem;
+  }
+  #ch3-text-panel .chapter-title { font-size: 1rem !important; }
+}
+
+@media (max-width: 480px) {
+  .dr-develop-label { display: none; } /* on very small screens use screen-reader only labels */
+  #ch3-text-panel { max-width: 130px !important; font-size: 0.65rem; }
+}
 
 /* ── INTERROGATION LAMP TOGGLE (via JS) ── */
 #chapter-2 {
@@ -994,22 +1064,15 @@ button:focus-visible, [role="button"]:focus-visible {
 
 /* Ch5 folder - real folder proportions */
 
-/* Crime board text panel - pinned note style */
+/* Crime board text panel - GSAP handles transform for centering + animation */
 #ch3-text-panel {
-  pointer-events: none;
+  pointer-events: none !important;
+  backdrop-filter: blur(4px);
   box-shadow: 3px 5px 18px rgba(0,0,0,0.7);
-  transform: rotate(1.5deg);
+  /* Note: top/left/transform set via inline style in HTML; GSAP animates on top */
 }
-/* Pin at top of ch3 panel */
-#ch3-text-panel::before {
-  content: '';
-  position: absolute;
-  top: -10px; left: 50%;
-  transform: translateX(-50%);
-  width: 14px; height: 14px;
-  background: var(--color-blue-neon);
-  border-radius: 50%;
-  box-shadow: 0 0 8px var(--color-blue-neon);
+#ch3-text-panel.faded {
+  opacity: 1 !important;  /* never fade */
 }
 
 /* Interrogation room lit suspect */
@@ -1088,15 +1151,6 @@ button:focus-visible, [role="button"]:focus-visible {
 #ch4-text-panel .chapter-title { font-size: 1.3rem !important; }
 #ch4-text-panel .code-block { font-size: .58rem !important; }
 
-/* Crime board – panel stays always visible, never fades */
-#ch3-text-panel {
-  pointer-events: none !important;
-  opacity: 1 !important;
-  backdrop-filter: blur(4px);
-}
-#ch3-text-panel.faded {
-  opacity: 1 !important;  /* override: never fade */
-}
 
 /* Case file – localStorage content has bottom padding */
 #fpage-storage {
